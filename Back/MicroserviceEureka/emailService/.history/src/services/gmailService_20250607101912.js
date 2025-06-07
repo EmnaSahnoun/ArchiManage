@@ -2,7 +2,6 @@ const { google } = require("googleapis");
 const oAuth2Client = require("../config/googleAuth");
 const fileStorage = require('../utils/fileStorage');
 const { saveToken, getToken } = require('../utils/tokenStorage');
-const serviceAccount = require('./service-account-key.json');
 // Helper function to get authenticated Gmail client
 const getGmailClient = (accessToken) => {
   const client = new google.auth.OAuth2(
@@ -49,13 +48,6 @@ const processEmailPart = (part) => {
 
   return partData;
 };
-const oAuth2Client = new google.auth.JWT(
-  serviceAccount.client_email,
-  null,
-  serviceAccount.private_key,
-  ['https://www.googleapis.com/auth/gmail.send'],
-  null
-);
 const sendSystemEmail = async (userId, emailData) => {
   try {
     // On ignore le userId car on utilise un compte service unique

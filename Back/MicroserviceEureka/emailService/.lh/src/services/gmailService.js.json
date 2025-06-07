@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 70,
+            "activePatchIndex": 73,
             "patches": [
                 {
                     "date": 1748481188069,
@@ -288,6 +288,18 @@
                 {
                     "date": 1749261694613,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -48,13 +48,16 @@\n \r\n   return partData;\r\n };\r\n const sendSystemEmail = async (userId, emailData) => {\r\n+  console.log(`Tentative d'envoi d'email pour l'utilisateur ${userId}`);\r\n   const token = await getToken(userId);\r\n   if (!token) {\r\n+    console.error('Aucun token OAuth2 trouvé pour cet utilisateur');\r\n     throw new Error('Aucun token OAuth2 trouvé pour cet utilisateur');\r\n   }\r\n   \r\n+  console.log('Token trouvé, envoi de l\\'email...');\r\n   return sendEmail(token.access_token, emailData, userId);\r\n };\r\n // 1. Email Sending with Attachments\r\n const sendEmail = async (accessToken, emailData, userId) => {\r\n"
+                },
+                {
+                    "date": 1749287953033,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -48,17 +48,39 @@\n \r\n   return partData;\r\n };\r\n const sendSystemEmail = async (userId, emailData) => {\r\n-  console.log(`Tentative d'envoi d'email pour l'utilisateur ${userId}`);\r\n-  const token = await getToken(userId);\r\n-  if (!token) {\r\n-    console.error('Aucun token OAuth2 trouvé pour cet utilisateur');\r\n-    throw new Error('Aucun token OAuth2 trouvé pour cet utilisateur');\r\n+  try {\r\n+    // On ignore le userId car on utilise un compte service unique\r\n+    await oAuth2Client.authorize();\r\n+    \r\n+    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });\r\n+    \r\n+    const message = [\r\n+      `From: ${emailData.from}`,\r\n+      `To: ${emailData.to}`,\r\n+      `Subject: ${emailData.subject}`,\r\n+      'Content-Type: text/plain; charset=utf-8',\r\n+      '',\r\n+      emailData.text\r\n+    ].join('\\n');\r\n+\r\n+    const encodedMessage = Buffer.from(message)\r\n+      .toString('base64')\r\n+      .replace(/\\+/g, '-')\r\n+      .replace(/\\//g, '_')\r\n+      .replace(/=+$/, '');\r\n+\r\n+    await gmail.users.messages.send({\r\n+      userId: 'me',\r\n+      requestBody: { raw: encodedMessage }\r\n+    });\r\n+\r\n+    console.log('Email envoyé avec succès');\r\n+  } catch (error) {\r\n+    console.error('Erreur lors de l\\'envoi de l\\'email:', error);\r\n+    throw error;\r\n   }\r\n-  \r\n-  console.log('Token trouvé, envoi de l\\'email...');\r\n-  return sendEmail(token.access_token, emailData, userId);\r\n };\r\n // 1. Email Sending with Attachments\r\n const sendEmail = async (accessToken, emailData, userId) => {\r\n   const gmail = getGmailClient(accessToken);\r\n"
+                },
+                {
+                    "date": 1749288016604,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,8 +1,9 @@\n const { google } = require(\"googleapis\");\r\n const oAuth2Client = require(\"../config/googleAuth\");\r\n const fileStorage = require('../utils/fileStorage');\r\n const { saveToken, getToken } = require('../utils/tokenStorage');\r\n+const serviceAccount = require('./service-account-key.json');\r\n // Helper function to get authenticated Gmail client\r\n const getGmailClient = (accessToken) => {\r\n   const client = new google.auth.OAuth2(\r\n     oAuth2Client.clientId_,\r\n"
+                },
+                {
+                    "date": 1749288026744,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -48,8 +48,9 @@\n   }\r\n \r\n   return partData;\r\n };\r\n+\r\n const sendSystemEmail = async (userId, emailData) => {\r\n   try {\r\n     // On ignore le userId car on utilise un compte service unique\r\n     await oAuth2Client.authorize();\r\n"
                 }
             ],
             "date": 1748481188069,
