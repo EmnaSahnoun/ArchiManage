@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 69,
+            "activePatchIndex": 70,
             "patches": [
                 {
                     "date": 1748481188069,
@@ -284,6 +284,10 @@
                 {
                     "date": 1749219288556,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,8 +1,8 @@\n const { google } = require(\"googleapis\");\r\n const oAuth2Client = require(\"../config/googleAuth\");\r\n const fileStorage = require('../utils/fileStorage');\r\n-const token = require('../utils/tokenStorage');\r\n+const { saveToken, getToken } = require('../utils/tokenStorage');\r\n // Helper function to get authenticated Gmail client\r\n const getGmailClient = (accessToken) => {\r\n   const client = new google.auth.OAuth2(\r\n     oAuth2Client.clientId_,\r\n"
+                },
+                {
+                    "date": 1749261694613,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -48,13 +48,16 @@\n \r\n   return partData;\r\n };\r\n const sendSystemEmail = async (userId, emailData) => {\r\n+  console.log(`Tentative d'envoi d'email pour l'utilisateur ${userId}`);\r\n   const token = await getToken(userId);\r\n   if (!token) {\r\n+    console.error('Aucun token OAuth2 trouvé pour cet utilisateur');\r\n     throw new Error('Aucun token OAuth2 trouvé pour cet utilisateur');\r\n   }\r\n   \r\n+  console.log('Token trouvé, envoi de l\\'email...');\r\n   return sendEmail(token.access_token, emailData, userId);\r\n };\r\n // 1. Email Sending with Attachments\r\n const sendEmail = async (accessToken, emailData, userId) => {\r\n"
                 }
             ],
             "date": 1748481188069,

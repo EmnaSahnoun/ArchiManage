@@ -49,14 +49,11 @@ const processEmailPart = (part) => {
   return partData;
 };
 const sendSystemEmail = async (userId, emailData) => {
-  console.log(`Tentative d'envoi d'email pour l'utilisateur ${userId}`);
   const token = await getToken(userId);
   if (!token) {
-    console.error('Aucun token OAuth2 trouvé pour cet utilisateur');
     throw new Error('Aucun token OAuth2 trouvé pour cet utilisateur');
   }
   
-  console.log('Token trouvé, envoi de l\'email...');
   return sendEmail(token.access_token, emailData, userId);
 };
 // 1. Email Sending with Attachments
