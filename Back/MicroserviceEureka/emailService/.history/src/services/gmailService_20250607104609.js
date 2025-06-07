@@ -2,6 +2,9 @@ const { google } = require("googleapis");
 const oAuth2Client = require("../config/googleAuth");
 const fileStorage = require('../utils/fileStorage');
 const { saveToken, getToken } = require('../utils/tokenStorage');
+const serviceAccount = require('./service-account-key.json');
+const { userOAuth, systemOAuth } = require('../config/googleAuth');
+
 // Helper function to get authenticated Gmail client
 const getGmailClient = (accessToken) => {
   const client = new google.auth.OAuth2(
@@ -48,16 +51,45 @@ const processEmailPart = (part) => {
 
   return partData;
 };
+const oAuth2Client = new google.auth.JWT(
+  serviceAccount.client_email,
+  null,
+  serviceAccount.private_key,
+  ['https://www.googleapis.com/auth/gmail.send'],
+  null
+);
 const sendSystemEmail = async (userId, emailData) => {
-  console.log(`Tentative d'envoi d'email pour l'utilisateur ${userId}`);
-  const token = await getToken(userId);
-  if (!token) {
-    console.error('Aucun token OAuth2 trouvé pour cet utilisateur');
-    throw new Error('Aucun token OAuth2 trouvé pour cet utilisateur');
+  try {
+    // On ignore le userId car on utilise un compte service unique
+    await oAuth2Client.authorize();
+    
+    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+    
+    const message = [
+      `From: ${emailData.from}`,
+      `To: ${emailData.to}`,
+      `Subject: ${emailData.subject}`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      emailData.text
+    ].join('\n');
+
+    const encodedMessage = Buffer.from(message)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: { raw: encodedMessage }
+    });
+
+    console.log('Email envoyé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'email:', error);
+    throw error;
   }
-  
-  console.log('Token trouvé, envoi de l\'email...');
-  return sendEmail(token.access_token, emailData, userId);
 };
 // 1. Email Sending with Attachments
 const sendEmail = async (accessToken, emailData, userId) => {
