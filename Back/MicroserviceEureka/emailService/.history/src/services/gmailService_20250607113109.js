@@ -51,42 +51,23 @@ const processEmailPart = (part) => {
 const SYSTEM_EMAIL = 'archimanage.systeo@gmail.com';
 const sendSystemEmail = async (userId, emailData) => {
   console.log(`Tentative d'envoi d'email pour l'utilisateur ${userId}`);
-  const token = await getToken(userId);
+  
+  // Utilisez le token du compte système au lieu de celui de l'utilisateur
+  const token = await getToken('system-account'); // ID spécial pour le compte système
+  
   if (!token) {
-    console.error('Aucun token OAuth2 trouvé pour cet utilisateur');
-    throw new Error('Aucun token OAuth2 trouvé pour cet utilisateur');
+    console.error('Aucun token OAuth2 trouvé pour le compte système');
+    throw new Error('Aucun token OAuth2 trouvé pour le compte système');
   }
   
+  // Forcer l'email de l'expéditeur à être le compte système
+  const systemEmailData = {
+    ...emailData,
+    from: `"ArchiManage Notifications" <${SYSTEM_EMAIL}>`
+  };
+  
   console.log('Token trouvé, envoi de l\'email...');
-  return sendSimpleEmail(token.access_token, emailData);
-};
-
-const sendSimpleEmail = async (accessToken, emailData) => {
-  const gmail = getGmailClient(accessToken);
-  
-  const messageParts = [
-    `From: ${emailData.from}`,
-    `To: ${emailData.to}`,
-    `Subject: ${emailData.subject}`,
-    `Content-Type: text/plain; charset=utf-8`,
-    `Content-Transfer-Encoding: quoted-printable`,
-    "",
-    emailData.text || ""
-  ];
-
-  const rawMessage = messageParts.join("\n");
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-
-  const response = await gmail.users.messages.send({
-    userId: "me",
-    requestBody: { raw: encodedMessage }
-  });
-  
-  return response.data;
+  return sendEmail(token.access_token, systemEmailData, 'system-account');
 };
 // 1. Email Sending with Attachments
 const sendEmail = async (accessToken, emailData, userId) => {
