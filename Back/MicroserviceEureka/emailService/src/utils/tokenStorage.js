@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const TOKENS_DIR = path.join(__dirname, '../../data/tokens');
-
+const SYSTEM_ACCOUNT_ID = 'system-account';
 if (!fs.existsSync(TOKENS_DIR)) {
   fs.mkdirSync(TOKENS_DIR, { recursive: true });
 }
@@ -20,4 +20,15 @@ function getToken(userId) {
   return null;
 }
 
-module.exports = { saveToken, getToken };
+async function initSystemAccountToken() {
+  // Configurez ici les tokens d'accès pour le compte système
+  const systemTokens = {
+    access_token: 'VOTRE_ACCESS_TOKEN',
+    refresh_token: 'VOTRE_REFRESH_TOKEN',
+    expiry_date: Date.now() + 3600 * 1000 // 1 heure
+  };
+  
+  await saveToken(SYSTEM_ACCOUNT_ID, systemTokens);
+}
+
+module.exports = { saveToken, getToken, initSystemAccountToken };
